@@ -1,0 +1,53 @@
+diff -up gnome-vfs-2.24.2/libgnomevfs/gnome-vfs-configuration.c.dir-prefix gnome-vfs-2.24.2/libgnomevfs/gnome-vfs-configuration.c
+--- gnome-vfs-2.24.2/libgnomevfs/gnome-vfs-configuration.c.dir-prefix	2010-03-22 11:50:51.753462595 -0400
++++ gnome-vfs-2.24.2/libgnomevfs/gnome-vfs-configuration.c	2010-03-22 11:53:30.000691055 -0400
+@@ -490,6 +490,7 @@ _gnome_vfs_configuration_init (void)
+ 	char *environment_path;
+ 	const char *home_dir;
+ 	char *cfgdir;
++        const char *override;
+ 
+ 	G_LOCK (configuration);
+ 	if (configuration != NULL) {
+@@ -507,14 +508,16 @@ _gnome_vfs_configuration_init (void)
+ 		install_path_list (environment_path);
+ 	}
+ 
+-	home_dir = g_get_home_dir ();
+-	if (home_dir != NULL) {
+-		home_config = g_build_filename (home_dir,
++        override = g_getenv ("GNOME22_USER_DIR");
++        if (override)
++                home_config = g_build_filename (override, "vfs", "modules", NULL);
++        else
++		home_config = g_build_filename (g_get_home_dir (),
+ 						".gnome2", "vfs", "modules",
+ 						NULL);
+-		add_directory_internal (home_config);
+-		g_free (home_config);
+-	}
++
++	add_directory_internal (home_config);
++	g_free (home_config);
+ 
+ 	configuration_load ();
+ 
+diff -up gnome-vfs-2.24.2/libgnomevfs/gnome-vfs-init.c.dir-prefix gnome-vfs-2.24.2/libgnomevfs/gnome-vfs-init.c
+--- gnome-vfs-2.24.2/libgnomevfs/gnome-vfs-init.c.dir-prefix	2010-03-22 11:53:47.129684767 -0400
++++ gnome-vfs-2.24.2/libgnomevfs/gnome-vfs-init.c	2010-03-22 11:57:00.814463713 -0400
+@@ -62,8 +62,14 @@ ensure_dot_gnome_exists (void)
+ {
+ 	gboolean retval = TRUE;
+ 	gchar *dirname;
++        const char *override;
+ 
+-	dirname = g_build_filename (g_get_home_dir (), ".gnome2", NULL);
++        override = g_getenv ("GNOME22_USER_DIR");
++
++        if (override)
++                dirname = g_strdup (override);
++        else
++	        dirname = g_build_filename (g_get_home_dir (), ".gnome2", NULL);
+ 
+ 	if (!g_file_test (dirname, G_FILE_TEST_EXISTS)) {
+ 		if (g_mkdir (dirname, S_IRWXU) != 0) {
